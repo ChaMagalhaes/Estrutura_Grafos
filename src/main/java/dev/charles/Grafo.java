@@ -1,134 +1,194 @@
 package dev.charles;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
 
 public class Grafo {
     private List<Vertice> vertices;
     private Set<Aresta> arestas;
 
+    public Grafo() {
+        this.vertices = new ArrayList<>();
+        this.arestas = new LinkedHashSet<>();
+    }
 
-    //Manipulacao de Vertices
-    public void addVertice(Vertice vertice){
-        if(vertices.contains(vertice)){
-            System.out.println("Esse elemento já está cadastrado!");
+    // Manipulacao de Vertices
+    public void addVertice(Vertice vertice) {
+        if (vertices.contains(vertice)) {
+            System.out.println("Esse vertice ja esta cadastrado: " + vertice);
             return;
         }
+
         vertices.add(vertice);
+        System.out.println("Vertice adicionado: " + vertice);
     }
 
-    public void removeVertice(Vertice vertice){
-        if(vertices.isEmpty()){
-            System.out.println("A lista de vertices está vazia, não tem como remover");
+    public void removeVertice(Vertice vertice) {
+        if (vertices.isEmpty()) {
+            System.out.println("A lista de vertices esta vazia, nao tem como remover.");
             return;
         }
 
-        destruidorRelacionamento(vertice);
-        vertices.remove(vertice);
-    }
-
-    private void destruidorRelacionamento(Vertice vertice) {
-        // Destruir relacionamento envolvendo vertice recebida
-        // Recebeu A destroi todos relacionamento que A possui
-        for(Aresta relacionamento : arestas){
-            if(relacionamento.estaEnvolvido(vertice)){
-                arestas.remove(relacionamento);
-            }
+        if (!vertices.contains(vertice)) {
+            System.out.println("Vertice nao encontrado: " + vertice);
+            return;
         }
+
+        removerRelacionamentosDoVertice(vertice);
+        vertices.remove(vertice);
+        System.out.println("Vertice removido: " + vertice);
     }
 
-    public boolean possuiEsteVertice(Vertice vertice){
+    private void removerRelacionamentosDoVertice(Vertice vertice) {
+        arestas.removeIf(aresta -> aresta.estaEnvolvido(vertice));
+    }
+
+    public boolean possuiEsteVertice(Vertice vertice) {
         return vertices.contains(vertice);
     }
 
-    public void getVertices(){
+    public void getVertices() {
+        if (vertices.isEmpty()) {
+            System.out.println("Nenhum vertice cadastrado.");
+            return;
+        }
+
         vertices.forEach(System.out::println);
     }
 
-    //Manipulacao de Arestas
-    public void adicionarAresta(Vertice a, Vertice b){
-        arestas.add(new Aresta(a, b));
+    // Manipulacao de Arestas
+    public void adicionarAresta(Vertice a, Vertice b) {
+        if (!vertices.contains(a) || !vertices.contains(b)) {
+            System.out.println("Nao foi possivel adicionar a aresta. Os dois vertices precisam estar cadastrados.");
+            return;
+        }
+
+        if (a.equals(b)) {
+            System.out.println("Nao foi possivel adicionar uma aresta ligando o vertice nele mesmo: " + a);
+            return;
+        }
+
+        Aresta novaAresta = new Aresta(a, b);
+
+        if (arestas.contains(novaAresta)) {
+            System.out.println("Essa aresta ja existe: " + novaAresta);
+            return;
+        }
+
+        arestas.add(novaAresta);
+        System.out.println("Aresta adicionada: " + novaAresta);
     }
 
-    public void adicionarAresta(Vertice a, Vertice b, int peso){
-        arestas.add(new Aresta(a, b, peso));
-    }
+    public void removerAresta(Vertice a, Vertice b) {
+        Aresta aresta = new Aresta(a, b);
 
-    public void removerAresta(Vertice a, Vertice b){
-
-        for(Aresta aresta : arestas){
-            if(aresta.estaEnvolvido(a) && aresta.estaEnvolvido(b)){
-                arestas.remove(aresta);
-            }
+        if (arestas.remove(aresta)) {
+            System.out.println("Aresta removida: " + aresta);
+        } else {
+            System.out.println("Aresta nao encontrada: " + aresta);
         }
     }
 
-    public boolean verificarRelacionamento(Vertice a, Vertice b){
-
-        for(Aresta aresta : arestas){
-            if(aresta.estaEnvolvido(a) && aresta.estaEnvolvido(b)){
-                return true;
-            }
-        }
-        return false;
+    public boolean verificarRelacionamento(Vertice a, Vertice b) {
+        return arestas.contains(new Aresta(a, b));
     }
 
-    public void getArestas(){
+    public void getArestas() {
+        if (arestas.isEmpty()) {
+            System.out.println("Nenhuma aresta cadastrada.");
+            return;
+        }
+
         arestas.forEach(System.out::println);
     }
 
-    public List<Vertice> encontrarVizinhos(Vertice vertice){
-        return arestas.stream()
-                .filter(x -> x.estaEnvolvido(vertice))
-                .map(x -> x.vizinhoDe(vertice))
-                .toList();
+    public List<Vertice> encontrarVizinhos(Vertice vertice) {
+        List<Vertice> vizinhos = new ArrayList<>();
+
+        for (Aresta aresta : arestas) {
+            if (aresta.estaEnvolvido(vertice)) {
+                Vertice vizinho = aresta.vizinhoDe(vertice);
+
+                if (vizinho != null) {
+                    vizinhos.add(vizinho);
+                }
+            }
+        }
+
+        return vizinhos;
     }
 
-    public void bfs(Vertice inicio){
+    public void mostrarVizinhos(Vertice vertice) {
+        List<Vertice> vizinhos = encontrarVizinhos(vertice);
+
+        if (vizinhos.isEmpty()) {
+            System.out.println(vertice + " nao possui vizinhos.");
+            return;
+        }
+
+        System.out.println("Vizinhos de " + vertice + ": " + vizinhos);
+    }
+
+    public void bfs(Vertice inicio) {
+        if (!vertices.contains(inicio)) {
+            System.out.println("Vertice inicial nao encontrado: " + inicio);
+            return;
+        }
+
         Queue<Vertice> fila = new LinkedList<>();
         List<Vertice> visitados = new ArrayList<>();
 
-        System.out.println("Iniciei no: " + inicio);
-        fila.addAll(encontrarVizinhos(inicio));
+        fila.add(inicio);
         visitados.add(inicio);
 
-        while(!fila.isEmpty()){
+        System.out.println("Busca em largura iniciando em: " + inicio);
+
+        while (!fila.isEmpty()) {
             Vertice verticeAtual = fila.poll();
-            System.out.println("Passando em: " + verticeAtual);
+            System.out.println("Visitando: " + verticeAtual);
 
-            visitados.add(verticeAtual);
-            List<Vertice> vizinhosNaoVisitados = encontrarVizinhos(verticeAtual).stream()
-                    .filter(x -> !visitados.contains(x))
-                    .toList();
-
-            visitados.addAll(vizinhosNaoVisitados);
-            fila.addAll(vizinhosNaoVisitados);
+            for (Vertice vizinho : encontrarVizinhos(verticeAtual)) {
+                if (!visitados.contains(vizinho)) {
+                    visitados.add(vizinho);
+                    fila.add(vizinho);
+                }
+            }
         }
-        System.out.println("Acabou");
     }
 
-    public void dfs(Vertice inicio){
+    public void dfs(Vertice inicio) {
+        if (!vertices.contains(inicio)) {
+            System.out.println("Vertice inicial nao encontrado: " + inicio);
+            return;
+        }
+
         Stack<Vertice> pilha = new Stack<>();
         List<Vertice> visitados = new ArrayList<>();
 
         pilha.push(inicio);
 
-        while(!pilha.isEmpty()){
+        System.out.println("Busca em profundidade iniciando em: " + inicio);
+
+        while (!pilha.isEmpty()) {
             Vertice atual = pilha.pop();
 
-            if(visitados.contains(atual)){
+            if (visitados.contains(atual)) {
                 continue;
             }
 
             System.out.println("Visitando: " + atual);
             visitados.add(atual);
 
-            List<Vertice> vizinhosNaoVisitados = encontrarVizinhos(atual).stream()
-                    .filter(x -> !visitados.contains(x))
-                    .toList();
-
-            pilha.addAll(vizinhosNaoVisitados);
+            for (Vertice vizinho : encontrarVizinhos(atual)) {
+                if (!visitados.contains(vizinho)) {
+                    pilha.push(vizinho);
+                }
+            }
         }
-
-        System.out.println("Acabou");
     }
 }
